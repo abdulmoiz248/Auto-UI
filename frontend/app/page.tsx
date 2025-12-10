@@ -9,30 +9,36 @@ import { motion } from "framer-motion";
 export default function CodeGeneratorMock() {
   const [prompt, setPrompt] = useState("");
   const [showLists, setShowLists] = useState(false);
+  const [outline, setOutline] = useState<{ sectionName: string; description: string }[]>([]);
+  const [newSection, setNewSection] = useState<{ sectionName: string; description: string }>({ sectionName: "", description: "" });
+  const [loading, setLoading] = useState(false);
 
-  const [pages, setPages] = useState(["Home Page", "Login Page"]);
-  const [instructions, setInstructions] = useState(["Use Tailwind", "Use clean folder structure"]);
-
-  const [newPage, setNewPage] = useState("");
-  const [newInstruction, setNewInstruction] = useState("");
-
-  const handleEnter = (e: any) => {
+  const handleEnter = async (e: any) => {
     if (e.key === "Enter" && prompt.trim() !== "") {
-      setShowLists(true);
+      setLoading(true);
+      try {
+        const res = await fetch(` http://127.0.0.1:8000/generate-outline/?topic=${encodeURIComponent(prompt)}`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        
+        });
+        const data = await res.json();
+        if (Array.isArray(data.outline)) {
+          setOutline(data.outline);
+          setShowLists(true);
+        }
+      } catch (err) {
+        console.error("Error fetching outline:", err);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
-  const addPage = () => {
-    if (newPage.trim() !== "") {
-      setPages([...pages, newPage]);
-      setNewPage("");
-    }
-  };
-
-  const addInstruction = () => {
-    if (newInstruction.trim() !== "") {
-      setInstructions([...instructions, newInstruction]);
-      setNewInstruction("");
+  const addSection = () => {
+    if (newSection.sectionName.trim() !== "" && newSection.description.trim() !== "") {
+      setOutline([...outline, newSection]);
+      setNewSection({ sectionName: "", description: "" });
     }
   };
 
@@ -50,55 +56,36 @@ export default function CodeGeneratorMock() {
         />
       </div>
 
-      {/* Suggested Lists */}
+      {/* Outline Lists */}
       {showLists && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-5xl"
         >
-          {/* Suggested Pages */}
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle>Suggested Pages</CardTitle>
+              <CardTitle>Website Outline</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {pages.map((p, i) => (
+              {outline.map((item, i) => (
                 <div key={i} className="p-2 bg-gray-100 rounded-lg">
-                  {p}
+                  <strong>{item.sectionName}</strong>: {item.description}
                 </div>
               ))}
 
-              <div className="flex gap-2 mt-3">
+              <div className="flex flex-col gap-2 mt-3">
                 <Input
-                  placeholder="Add page…"
-                  value={newPage}
-                  onChange={(e) => setNewPage(e.target.value)}
+                  placeholder="Section name…"
+                  value={newSection.sectionName}
+                  onChange={(e) => setNewSection({ ...newSection, sectionName: e.target.value })}
                 />
-                <Button onClick={addPage}>Add</Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Key Instructions */}
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle>Key Instructions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {instructions.map((p, i) => (
-                <div key={i} className="p-2 bg-gray-100 rounded-lg">
-                  {p}
-                </div>
-              ))}
-
-              <div className="flex gap-2 mt-3">
                 <Input
-                  placeholder="Add instruction…"
-                  value={newInstruction}
-                  onChange={(e) => setNewInstruction(e.target.value)}
+                  placeholder="Description…"
+                  value={newSection.description}
+                  onChange={(e) => setNewSection({ ...newSection, description: e.target.value })}
                 />
-                <Button onClick={addInstruction}>Add</Button>
+                <Button onClick={addSection}>Add Section</Button>
               </div>
             </CardContent>
           </Card>
@@ -117,6 +104,8 @@ export default function CodeGeneratorMock() {
           </Button>
         </motion.div>
       )}
+
+      {loading && <p className="mt-4 text-gray-500">Generating outline...</p>}
     </div>
   );
 }
