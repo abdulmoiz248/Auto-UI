@@ -2,6 +2,7 @@ from utils.call_ai import call_ai
 import json
 
 def generate_outline(topic):
+    print("Generating website outline...")
     system_prompt = (
         "Your goal is to take a user message about a website and break it down into key requirements. "
         "Analyze the user's intent and produce a structured JSON array representing the website outline. "
@@ -25,4 +26,3 @@ def generate_outline(topic):
     return outline_json
 
 
-print("Generating website outline...")
