@@ -5,7 +5,7 @@ from classes.cache import SemanticCache
 from utils.planner_agent import plan_website
 from pydantic import BaseModel
 from typing import List
-
+from utils.component_specs_agent import generate_component_specs
 app = FastAPI()
 cache = SemanticCache(redisHost="localhost", redisPort=6379)
 
@@ -41,9 +41,10 @@ def get_generated_outline(topic: str):
 @app.post("/generate-code")
 def generate_code(request: OutlineRequest):
     theme, pages = plan_website(request.outline)
-    print("Planned website structure:")
-    print("Theme:", theme)
-    print("Pages:", pages)
+    print("Planned website structure: ", {"theme": theme})
+    components_spec= generate_component_specs({"theme": theme, "pages": pages})
+    print("Generated component specs: ", components_spec)
+
     return {"theme": theme, "pages": pages}
 
 if __name__ == "__main__":
