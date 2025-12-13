@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
+import axios from "axios";
 
 export default function CodeGeneratorMock() {
   const [prompt, setPrompt] = useState("");
@@ -128,7 +129,17 @@ export default function CodeGeneratorMock() {
           animate={{ opacity: 1 }}
           className="mt-8 mb-10"
         >
-          <Button size="lg" className="px-12 py-7 text-lg shadow-xl bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+          <Button
+          onClick={()=>{
+          axios.post('http://127.0.0.1:8000/generate-code', { outline })
+        .then(response => {
+          console.log('Code generation response:', response.data);
+        })
+        .catch(error => {
+          console.error('Error generating code:', error);
+        });
+          }}
+           size="lg" className="px-12 py-7 text-lg shadow-xl bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
             Generate Code
           </Button>
         </motion.div>
