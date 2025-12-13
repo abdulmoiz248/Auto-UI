@@ -110,7 +110,26 @@ def plan_website(outline):
     result = call_ai(messages, system_prompt=system_prompt)
 
     try:
-        parsed = json.loads(result)
+        # Clean up the response
+        cleaned_result = result.strip()
+        
+        # Remove markdown code blocks
+        if cleaned_result.startswith("```json"):
+            cleaned_result = cleaned_result[7:]
+        elif cleaned_result.startswith("```"):
+            cleaned_result = cleaned_result[3:]
+        if cleaned_result.endswith("```"):
+            cleaned_result = cleaned_result[:-3]
+        cleaned_result = cleaned_result.strip()
+        
+        # Find the last closing brace and cut everything after it
+        last_brace = cleaned_result.rfind('}')
+        if last_brace != -1:
+            cleaned_result = cleaned_result[:last_brace + 1]
+        
+        parsed = json.loads(cleaned_result)
         return parsed.get("theme"), parsed.get("pages")
-    except Exception:
-        raise ValueError("Planner agent returned invalid JSON")
+    except Exception as e:
+        print(f"Planner agent JSON error: {e}")
+        print(f"Response preview: {result[:500] if result else 'empty'}...")
+        raise ValueError(f"Planner agent returned invalid JSON: {str(e)}")

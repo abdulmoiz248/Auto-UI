@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from utils.component_gen_agent import generate_full_next_app
 from utils.outline_agent import generate_outline
 from classes.cache import SemanticCache
 from utils.planner_agent import plan_website
@@ -39,13 +40,14 @@ def get_generated_outline(topic: str):
 
 
 @app.post("/generate-code")
-def generate_code(request: OutlineRequest):
+async def generate_code(request: OutlineRequest):
     theme, pages = plan_website(request.outline)
     print("Planned website structure: ", {"theme": theme})
     components_spec= generate_component_specs({"theme": theme, "pages": pages})
-    print("Generated component specs: ", components_spec)
+    print("Generated component specs")
+    preview_data = await generate_full_next_app(components_spec)
+    return preview_data
 
-    return {"theme": theme, "pages": pages}
 
 if __name__ == "__main__":
     import uvicorn

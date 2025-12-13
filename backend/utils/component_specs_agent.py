@@ -53,8 +53,9 @@ def generate_component_specs(planned_structure):
         "    }\n"
         "  }\n"
         "}\n\n"
-        "Rules:\n"
-        "- Output ONLY valid JSON\n"
+        "CRITICAL Rules:\n"
+        "- Output ONLY valid JSON - no explanations, no notes, no extra text\n"
+        "- Do NOT add any text after the closing brace\n"
         "- Use theme information where relevant\n"
         "- Recommend only commonly used frontend libraries\n"
         "- Do not add sections/components not in the planned structure\n"
@@ -79,22 +80,29 @@ def generate_component_specs(planned_structure):
             raise ValueError("Component Spec Agent returned empty response")
         
         print(f"Raw AI response length: {len(result)} chars")
-        print(f"Raw AI response preview: {result[:500]}...")  # Print first 500 chars for debugging
         
-        # Try to extract JSON if wrapped in markdown code blocks
+        # Clean up the response - remove markdown blocks and extra text
         cleaned_result = result.strip()
+        
+        # Remove markdown code blocks
         if cleaned_result.startswith("```json"):
             cleaned_result = cleaned_result[7:]
-        if cleaned_result.startswith("```"):
+        elif cleaned_result.startswith("```"):
             cleaned_result = cleaned_result[3:]
         if cleaned_result.endswith("```"):
             cleaned_result = cleaned_result[:-3]
         cleaned_result = cleaned_result.strip()
         
+        # Find the last closing brace and cut everything after it
+        last_brace = cleaned_result.rfind('}')
+        if last_brace != -1:
+            cleaned_result = cleaned_result[:last_brace + 1]
+        
+        print(f"✓ JSON cleaned and ready to parse")
         return json.loads(cleaned_result)
     except json.JSONDecodeError as e:
         print(f"JSON parsing error: {e}")
-        print(f"Response content: {result}")
+        print(f"Cleaned result preview: {cleaned_result[:500]}...")
         raise ValueError(f"Component Spec Agent returned invalid JSON: {str(e)}")
     except Exception as e:
         print(f"Unexpected error: {e}")
