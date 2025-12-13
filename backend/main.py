@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from utils.outline import generate_outline
+from backend.utils.outline_agent import generate_outline
 from classes.cache import SemanticCache
 
 app = FastAPI()
