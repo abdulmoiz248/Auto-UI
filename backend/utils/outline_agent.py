@@ -1,28 +1,33 @@
-from utils.call_ai import call_ai
-import json
+from langchain_core.output_parsers.pydantic import PydanticOutputParser
+from pydantic import BaseModel, Field, RootModel
+from call_ai import call_ai
+
+
+class Section(BaseModel):
+    sectionName: str = Field(...)
+    description: str = Field(...)
+
+class Outline(RootModel[list[Section]]):
+    pass
+
+parser = PydanticOutputParser(pydantic_object=Outline)
 
 def generate_outline(topic):
-    print("Generating website outline...")
-    system_prompt = (
-        "Your goal is to take a user message about a website and break it down into key requirements. "
-        "Analyze the user's intent and produce a structured JSON array representing the website outline. "
-        "Each element in the array should have 'sectionName' and 'description', describing the purpose and content of that section." \
-        "Dont include any introductory or concluding remarks, just the JSON array."
-    )
-    messages = [
-        {
-            "role": "user",
-            "content": f"Create a detailed outline for a website about: '{topic}'."
-        }
-    ]
-    outline = call_ai(messages, system_prompt=system_prompt)
-    
-    # Try to parse the response as JSON, fallback to string if invalid
-    try:
-        outline_json = json.loads(outline)
-    except Exception:
-        outline_json = outline
-    
-    return outline_json
+    prompt = f"""
+Create a detailed website outline for the topic: "{topic}"
+
+Return ONLY valid JSON array.
+Do not include extra text.
+
+{parser.get_format_instructions()}
+"""
+
+    response = call_ai([{"content": prompt}])
+    parsed = parser.parse(response)
+    return parsed.model_dump()  # use model_dump() in Pydantic v2
 
 
+if __name__ == "__main__":
+    topic = "Health and Wellness Blog"
+    outline = generate_outline(topic)
+    print(outline)
