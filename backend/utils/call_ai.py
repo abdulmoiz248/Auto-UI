@@ -1,31 +1,23 @@
 import os
 from dotenv import load_dotenv
-from groq import Groq
+from langchain_groq import ChatGroq
+from langchain.schema import SystemMessage, HumanMessage
 
-# Load environment variables from .env file
 load_dotenv()
 
-print("Starting Groq client...")
-api_key = os.environ.get("GROQ_API_KEY")
-if api_key:
-    print(f"Loading API key from environment variable...")
-else:
-    print("WARNING: GROQ_API_KEY not found in environment")
-
-client = Groq(
-    api_key=os.environ.get("GROQ_API_KEY"),
+llm = ChatGroq(
+    model="llama-3.3-70b-versatile",
+    temperature=0,
+    groqApiKey=os.environ.get("GROQ_API_KEY")
 )
 
+def call_ai(messages, systemPrompt="You are a helpful assistant."):
+    formattedMessages = [SystemMessage(content=systemPrompt)]
 
-def call_ai(messages, model="llama-3.3-70b-versatile",system_prompt="You are a helpful assistant."):
+    for msg in messages:
+        formattedMessages.append(
+            HumanMessage(content=msg["content"])
+        )
 
-
-    chat_completion = client.chat.completions.create(
-        messages=[
-            {"role": "system", "content": system_prompt},
-            *messages
-        ],
-        model=model,
-    )
-
-    return chat_completion.choices[0].message.content
+    response = llm.invoke(formattedMessages)
+    return response.content
