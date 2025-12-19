@@ -1,7 +1,7 @@
 from langchain_core.output_parsers.pydantic import PydanticOutputParser
 from pydantic import BaseModel, Field, RootModel
 from typing import Literal
-from call_ai import call_ai
+from utils.call_ai import call_ai
 import json
 
 

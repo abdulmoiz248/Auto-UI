@@ -1,6 +1,6 @@
 from langchain_core.output_parsers.pydantic import PydanticOutputParser
 from pydantic import BaseModel, Field, RootModel
-from call_ai import call_ai
+from utils.call_ai import call_ai
 
 
 class Section(BaseModel):

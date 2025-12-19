@@ -7,5 +7,7 @@ sentence-transformers
 numpy
 langchain
 langchain-groq
+langchain-google-genai
+
 
 
