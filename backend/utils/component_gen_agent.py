@@ -1,8 +1,12 @@
 import json
 import asyncio
-import time
-from concurrent.futures import ThreadPoolExecutor
-from utils.call_ai import call_ai
+from pydantic import BaseModel, Field
+from call_ai import call_ai
+
+
+class GeneratedApp(BaseModel):
+    files: dict[str, str] = Field(..., description="Dictionary mapping file paths to their content")
+
 
 NEXT_PACKAGE_JSON = {
     "name": "generated-next-app",
@@ -66,13 +70,13 @@ async def generate_full_next_app(component_specs):
         files[f"{page_folder}/page.tsx"] = page_code
 
     print("✓ All components generated")
-    return {"files": files}
+    return GeneratedApp(files=files).model_dump()
 
 async def call_ai_component(file_path, spec):
-    system_prompt = (
-        "You are a frontend code generator. You will receive a component spec in JSON:\n"
-        f"{json.dumps(spec)}\n"
-        "Generate a fully functional TSX React component:\n"
+    prompt = (
+        "You are a frontend code generator. Generate a fully functional TSX React component based on the spec below.\n\n"
+        f"Component spec:\n{json.dumps(spec)}\n\n"
+        "Requirements:\n"
         "- Include props and state\n"
         "- Use Tailwind CSS according to the theme\n"
         "- Use any recommended libraries\n"
@@ -80,11 +84,10 @@ async def call_ai_component(file_path, spec):
         "- CRITICAL: Return ONLY the raw TSX code without any markdown code blocks, backticks, or ```tsx wrapper\n"
         "- NO explanations, NO markdown formatting, ONLY the code itself"
     )
-    messages = [{"role": "user", "content": json.dumps(spec)}]
     
     # Run the synchronous call_ai in a thread pool
     loop = asyncio.get_event_loop()
-    tsx_code = await loop.run_in_executor(None, lambda: call_ai(messages, system_prompt=system_prompt))
+    tsx_code = await loop.run_in_executor(None, lambda: call_ai([{"content": prompt}]))
     
     # Clean up any markdown code blocks if present
     cleaned_code = tsx_code.strip()
