@@ -1,7 +1,7 @@
 import json
 import asyncio
 from pydantic import BaseModel, Field
-from utils.call_ai import call_ai
+from utils.call_gemini import call_gemini 
 
 
 class GeneratedApp(BaseModel):
@@ -327,7 +327,7 @@ async def generate_page_components_batch(page_route, components, theme=None):
     loop = asyncio.get_event_loop()
     response = await loop.run_in_executor(
         None, 
-        lambda: call_ai([{"content": prompt}])
+        lambda: call_gemini(messages=[{"content": prompt}])
     )
     
     # Parse the response (expecting JSON with component code)
